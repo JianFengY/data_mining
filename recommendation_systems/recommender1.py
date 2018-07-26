@@ -3,6 +3,8 @@ Created on 2018/7/26
 @Author: Jeff Yang
 """
 
+from math import sqrt
+
 users = {
     "Angelica": {
         "Blues Traveler": 3.5,
@@ -87,7 +89,64 @@ def compute_nearest_neighbor(username, users):
     return sorted([(compute_manhattan(users[username], users[user]), user) for user in users if user is not username])
 
 
+def recommend(username, users):
+    """返回推荐列表"""
+    # 找到距离最近的用户
+    nearest_neighbor = compute_nearest_neighbor(username, users)[0][1]
+    # 找到距离最近用户评分过而username没有评价的乐队
+    return sorted(((band, users[nearest_neighbor][band]) for band in users[nearest_neighbor] if
+                   band not in users[username]), key=lambda artistTuple: artistTuple[1], reverse=True)
+
+
+def compute_minkowski(rating1, rating2, r):
+    """计算闵可夫斯基距离，r用1表示使用曼哈顿距离，r用2表示使用欧几里得距离"""
+    distance = 0
+    for key in rating1:
+        if key in rating2:
+            # pow(x, y)计算x的y次方
+            distance += pow(abs(rating1[key] - rating2[key]), r)
+    return pow(distance, 1.0 / r)
+
+
+def pearson(rating1, rating2):
+    """计算皮尔逊相关系数"""
+    sum_xy = 0
+    sum_x = 0
+    sum_y = 0
+    sum_x2 = 0
+    sum_y2 = 0
+    n = 0
+    for key in rating1:
+        if key in rating2:
+            n += 1
+            x = rating1[key]
+            y = rating2[key]
+            sum_xy += x * y
+            sum_x += x
+            sum_y += y
+            sum_x2 += pow(x, 2)
+            sum_y2 += pow(y, 2)
+    # 计算分母
+    denominator = sqrt(sum_x2 - pow(sum_x, 2) / n) * sqrt(sum_y2 - pow(sum_y, 2) / n)
+    if denominator == 0:
+        return 0
+    else:
+        return (sum_xy - (sum_x * sum_y) / n) / denominator
+
+
 if __name__ == '__main__':
-    # d = compute_manhattan(users["Jordyn"], users["Hailey"])
-    d = compute_nearest_neighbor("Hailey", users)
-    print(d)
+    # print(compute_manhattan(users["Jordyn"], users["Hailey"]))
+    ##########
+    # print(compute_nearest_neighbor("Hailey", users))
+    ##########
+    # print(recommend('Hailey', users))
+    # print(recommend('Sam', users))
+    # print(recommend('Angelica', users))
+    ##########
+    # print(compute_nearest_neighbor('Angelica', users))
+    ##########
+    # print(compute_minkowski(users["Angelica"], users["Bill"], 2))
+    ##########
+    print(pearson(users['Angelica'], users['Bill']))
+    print(pearson(users['Angelica'], users['Hailey']))
+    print(pearson(users['Angelica'], users['Jordyn']))
